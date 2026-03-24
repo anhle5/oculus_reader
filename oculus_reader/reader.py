@@ -7,6 +7,13 @@ import os
 from ppadb.client import Client as AdbClient
 import sys
 
+try:
+    from oculus_reader.local_config import OCULUS_IP_ADDRESS as _LOCAL_OCULUS_IP_ADDRESS
+except Exception:
+    _LOCAL_OCULUS_IP_ADDRESS = None
+
+_USE_LOCAL_CONFIG = object()
+
 def eprint(*args, **kwargs):
     RED = "\033[1;31m"  
     sys.stderr.write(RED)
@@ -16,7 +23,7 @@ def eprint(*args, **kwargs):
 
 class OculusReader:
     def __init__(self,
-            ip_address=None,
+            ip_address=_USE_LOCAL_CONFIG,
             port = 5555,
             APK_name='com.rail.oculus.teleop',
             print_FPS=False,
@@ -28,7 +35,10 @@ class OculusReader:
         self._lock = threading.Lock()
         self.tag = 'wE9ryARX'
 
-        self.ip_address = ip_address
+        if ip_address is _USE_LOCAL_CONFIG:
+            self.ip_address = os.environ.get('OCULUS_READER_IP', _LOCAL_OCULUS_IP_ADDRESS)
+        else:
+            self.ip_address = ip_address
         self.port = port
         self.APK_name = APK_name
         self.print_FPS = print_FPS
@@ -87,11 +97,11 @@ class OculusReader:
         eprint('Run `adb devices` to verify that the device is visible.')
         exit(1)
 
-    def get_device(self):
+    def get_device(self, client=None, retry=0):
         # Default is "127.0.0.1" and 5037
         client = AdbClient(host="127.0.0.1", port=5037)
         if self.ip_address is not None:
-            return self.get_network_device(client)
+            return self.get_network_device(client, retry=retry)
         else:
             return self.get_usb_device(client)
 

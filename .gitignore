@@ -148,3 +148,4 @@ cython_debug/
 
 # Project relevant
 app_source/Projects/Android/.idea/caches/
+oculus_reader/local_config.py
